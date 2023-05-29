@@ -9,7 +9,7 @@ const socket = io('http://localhost:5000')
 const App = () => {
   const [stream,setStream] = useState(null);
   const [userID,setUserID] = useState('');
-  const [call,setCall] = useState({});
+  const [call,setCall] = useState(null);
   const [userName,setUserName] = useState('');
   const [inputID,setInputID] = useState('');
 
@@ -19,7 +19,7 @@ const App = () => {
   const connection = useRef();
 
 
-  useEffect(  ()=>{
+  useEffect(()=>{
     //receive the id 
     socket.on("me",id =>{
       setUserID(id)
@@ -28,15 +28,16 @@ const App = () => {
 
 
     const getUserVid = async() =>{
-      const userStream = await navigator.mediaDevices.getUserMedia({video: true,})
-      userVid.current.srcObject = userStream;
+      const userStream = await navigator.mediaDevices.getUserMedia({video: true,audio:true})
       setStream(userStream);
+      userVid.current.srcObject = userStream;
     }
 
     //save the call that is sent
-    socket.on('callUser',({signal,from,name}) =>{
-        setCall({receivingCall:true, signal,callerId : from, callerName : name});
+    socket.on('callUser',({ from, name: callerName, signal}) =>{
+        setCall({isReceivingCall: true, from, name: callerName, signal });
     })
+    
 
 
     getUserVid();
@@ -57,7 +58,7 @@ const App = () => {
 
     //when a signal is received, respond with peer signal and we have call instance to refer to
     userPeer.on('signal',(data) =>{
-      socket.emit('answerCall',{to:call.from,signal:data});
+      socket.emit('answerCall',{ signal: data, to: call.from});
     })
     
     //when we recive the remote-user stream save it locally
@@ -74,16 +75,16 @@ const App = () => {
   }
 
   const makeCall = (id) => {
+    
     //create a peer connection
     const userPeer = new Peer({
-      initiator: false,
+      initiator: true,
       trickle:false,
       stream,
     });
-
     //when there is a signal call the provided user with the provided signal data
     userPeer.on('signal',(data)=>{
-      socket.emit('callUser',{userToCall:id,signal:data,from:userID,name:userName})
+      socket.emit('callUser',{userToCall: id, signal: data, from: userID, name:userName})
     })
 
     //when we receive the other person stream saveit locally
@@ -93,7 +94,7 @@ const App = () => {
 
     //when the call gets accepted set the signal of the call
     socket.on("callAccepted",(signal)=>{
-      userPeer.signal = signal;
+      userPeer.signal(signal);
     })
 
    //save the connection instance of the peer
@@ -106,7 +107,8 @@ const App = () => {
       <h1>user-id: {userID}</h1>
       <input value={inputID} onChange={e=>setInputID(e.target.value)} />
       <button onClick={() =>makeCall(inputID)}>call</button>
-      <button onClick={answerCall}>answe</button>
+      {console.log(call)}
+      {call&& <button onClick={answerCall}>answer</button> }
       <h3>current</h3>
       <video ref={userVid} autoPlay={true} muted/>
       <h3>remote</h3>
