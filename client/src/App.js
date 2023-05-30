@@ -12,6 +12,7 @@ const App = () => {
   const [call,setCall] = useState(null);
   const [userName,setUserName] = useState('');
   const [inputID,setInputID] = useState('');
+  const [inCall,setInCall] = useState(false);
 
 
   const friendVid = useRef();
@@ -32,6 +33,9 @@ const App = () => {
       setStream(userStream);
       userVid.current.srcObject = userStream;
     }
+
+    //the user is not yet in a call
+    setCall(false);
 
     //save the call that is sent
     socket.on('callUser',({ from, name: callerName, signal}) =>{
@@ -72,6 +76,9 @@ const App = () => {
     //save the connection instance of the peer
     connection.current = userPeer;
 
+
+    //update the call property
+    setInCall(true);
   }
 
   const makeCall = (id) => {
@@ -87,7 +94,7 @@ const App = () => {
       socket.emit('callUser',{userToCall: id, signal: data, from: userID, name:userName})
     })
 
-    //when we receive the other person stream saveit locally
+    //when we receive the other person stream save it locally
     userPeer.on('stream',(userStream) =>{
       friendVid.current.srcObject = userStream;
     });
@@ -95,11 +102,25 @@ const App = () => {
     //when the call gets accepted set the signal of the call
     socket.on("callAccepted",(signal)=>{
       userPeer.signal(signal);
+      //when the call is accepted update the call property
+      setInCall(true);
     })
 
    //save the connection instance of the peer
    connection.current = userPeer;
 
+  }
+
+
+  const endCall = () =>{
+    //update the call property
+    setInCall(false);
+
+    //destroy the connection
+    // connection.current.destroy();
+
+    //reload to get another user-ID
+    window.location.reload();
   }
 
   return (
@@ -108,7 +129,8 @@ const App = () => {
       <input value={inputID} onChange={e=>setInputID(e.target.value)} />
       <button onClick={() =>makeCall(inputID)}>call</button>
       {console.log(call)}
-      {call&& <button onClick={answerCall}>answer</button> }
+      {!inCall && call ?  <button onClick={answerCall}>answer</button> 
+                : inCall &&  <button onClick={endCall}>end call</button>}
       <h3>current</h3>
       <video ref={userVid} autoPlay={true} muted/>
       <h3>remote</h3>
