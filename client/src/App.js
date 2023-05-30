@@ -1,6 +1,61 @@
 import { useEffect, useRef, useState } from 'react';
 import Peer from 'simple-peer';
 import {io} from 'socket.io-client';
+import { Button, TextField, Typography} from '@mui/material';
+// import { makeStyles } from '@mui/styles';
+import  './App.css'
+import backgroundImage from './background.jpg';
+
+// const useStyles = {
+//   container: {
+//     height: '100vh',
+//     display: 'flex',
+//     flexDirection: 'column',
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//     background: `url(${backgroundImage})`,
+//     backgroundSize: 'cover',
+//     backgroundPosition: 'center',
+//   },
+//   title: {
+//     color: '#fff',
+//     marginBottom: theme.spacing(4),
+//     fontWeight: 'bold',
+//     fontSize: '2rem',
+//   },
+//   form: {
+//     display: 'flex',
+//     flexDirection: 'column',
+//     alignItems: 'center',
+//     marginBottom: theme.spacing(4),
+//   },
+//   input: {
+//     marginBottom: theme.spacing(2),
+//     width: '100%',
+//     maxWidth: '300px',
+//     background: '#fff',
+//     borderRadius: '4px',
+//     padding: theme.spacing(1),
+//     boxSizing: 'border-box',
+//   },
+//   button: {
+//     width: '100%',
+//     maxWidth: '300px',
+//   },
+//   videoContainer: {
+//     display: 'flex',
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//     marginBottom: theme.spacing(2),
+//     maxWidth: '500px',
+//   },
+//   video: {
+//     width: '100%',
+//     borderRadius: '4px',
+//     boxShadow: '0px 2px 10px rgba(0, 0, 0, 0.3)',
+//   },
+// };
+
 
 
 
@@ -15,9 +70,11 @@ const App = () => {
   const [inCall,setInCall] = useState(false);
 
 
-  const friendVid = useRef();
+  const friendVid = useRef(); 
   const userVid = useRef(); 
   const connection = useRef();
+
+
 
 
   useEffect(()=>{
@@ -124,19 +181,39 @@ const App = () => {
   }
 
   return (
-    <div>
-      <h1>user-id: {userID}</h1>
-      <input value={inputID} onChange={e=>setInputID(e.target.value)} />
-      <button onClick={() =>makeCall(inputID)}>call</button>
-      {console.log(call)}
-      {!inCall && call ?  <button onClick={answerCall}>answer</button> 
-                : inCall &&  <button onClick={endCall}>end call</button>}
-      <h3>current</h3>
-      <video ref={userVid} autoPlay={true} muted/>
-      <h3>remote</h3>
-      <video ref={friendVid} autoPlay={true} />
+    <div className="container">
+      <Typography variant="h4" className="title">
+        User ID: {userID}
+      </Typography>
+      <div className="form">
+        <TextField
+          label="Call ID"
+          variant="outlined"
+          value={inputID}
+          onChange={(e) => setInputID(e.target.value)}
+          className="input"
+        />
+        <Button variant="contained" color="primary" onClick={() => makeCall(inputID)} className="button">
+          Call
+        </Button>
+        {call && !inCall && (
+          <Button variant="contained" color="primary" onClick={answerCall} className="button">
+            Answer
+          </Button>
+        )}
+        {inCall && (
+          <Button variant="contained" color="secondary" onClick={endCall} className="button">
+            End Call
+          </Button>
+        )}
+      </div>
+      <div className="videoContainer">
+        <video ref={userVid} autoPlay muted className="video" />
+        <video ref={friendVid} autoPlay className="video" />
+      </div>
     </div>
-  )
+);
+  // )
 }
 
 export default App
